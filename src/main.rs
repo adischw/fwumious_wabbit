@@ -156,6 +156,7 @@ fn main2() -> Result<(), Box<dyn Error>>  {
             let mut prediction: f32 = 0.0;
 
             if prediction_model_delay == 0 {
+                println!("main");
                 let update = match holdout_after_option {
                     Some(holdout_after) => !testonly && example_num < holdout_after,
                     None => !testonly

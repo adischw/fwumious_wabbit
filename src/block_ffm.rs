@@ -144,7 +144,9 @@ impl <L:OptimizerTrait + 'static> BlockTrait for BlockFFM<L>
      fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance) {
          if mi.ffm_k > 0 {
              for i in 0..self.ffm_weights_len {
+                 //println!("before change: {:.8}", self.weights[i].optimizer_data);
                  self.weights[i as usize].optimizer_data = self.optimizer_ffm.initial_data();
+                 //println!("after change: {}", self.weights[i].optimizer_data);
              }
          }
      }

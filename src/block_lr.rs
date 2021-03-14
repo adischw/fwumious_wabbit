@@ -54,12 +54,11 @@ impl <L:OptimizerTrait + 'static> BlockTrait for BlockLR<L>
 
     fn allocate_and_init_weights(&mut self, mi: &model_instance::ModelInstance) {
         self.weights = vec![WeightAndOptimizerData::<L>{weight:0.0, optimizer_data: self.optimizer_lr.initial_data()}; self.weights_len as usize];
-        
+
     }
 
     fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance) {
-        self.weights = vec![WeightAndOptimizerData::<L>{weight:?????, optimizer_data: self.optimizer_lr.initial_data()}; self.weights_len as usize];
-
+        //pass
     }
 
     #[inline(always)]

@@ -181,7 +181,7 @@ impl Regressor  {
 
         Ok(())
     }
-    
+
 
     
     pub fn immutable_regressor_from_buf(&mut self, mi: &model_instance::ModelInstance, input_bufreader: &mut dyn io::Read) -> Result<Regressor, Box<dyn Error>> {
