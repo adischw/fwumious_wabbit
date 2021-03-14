@@ -98,6 +98,11 @@ impl BlockTrait for BlockSigmoid {
     fn allocate_and_init_weights(&mut self, mi: &model_instance::ModelInstance) {
         // empty
     }
+
+    fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance) {
+        // empty
+    }
+
     fn get_serialized_len(&self) -> usize {
         return 0
     }

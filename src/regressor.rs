@@ -35,6 +35,7 @@ pub trait BlockTrait {
                          fb: &feature_buffer::FeatureBuffer) -> f32;
 
     fn allocate_and_init_weights(&mut self, mi: &model_instance::ModelInstance);
+    fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance);
     fn get_serialized_len(&self) -> usize;
     fn write_weights_to_buf(&self, output_bufwriter: &mut dyn io::Write) -> Result<(), Box<dyn Error>>;
     fn read_weights_from_buf(&mut self, input_bufreader: &mut dyn io::Read) -> Result<(), Box<dyn Error>>;
@@ -101,6 +102,12 @@ impl Regressor  {
             rr.allocate_and_init_weights(mi);
         }
     }
+
+    pub fn reset_optimizer_data_(&mut self, mi: &model_instance::ModelInstance) {
+        for rr in &mut self.blocks_boxes {
+            rr.reset_optimizer_data(mi);
+        }
+    }
     
 
     pub fn new<L: optimizer::OptimizerTrait + 'static>(mi: &model_instance::ModelInstance) -> Regressor 
@@ -116,6 +123,10 @@ impl Regressor  {
 
     pub fn allocate_and_init_weights(&mut self, mi: &model_instance::ModelInstance) {
         self.allocate_and_init_weights_(mi);
+    }
+
+    pub fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance) {
+        self.reset_optimizer_data_(mi);
     }
 
     pub fn learn(&mut self, fb: &feature_buffer::FeatureBuffer, update: bool) -> f32 {
@@ -170,6 +181,7 @@ impl Regressor  {
 
         Ok(())
     }
+    
 
     
     pub fn immutable_regressor_from_buf(&mut self, mi: &model_instance::ModelInstance, input_bufreader: &mut dyn io::Read) -> Result<Regressor, Box<dyn Error>> {

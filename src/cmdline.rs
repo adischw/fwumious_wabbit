@@ -131,7 +131,7 @@ pub fn parse<'a>() -> clap::ArgMatches<'a> {
                      .long("testonly")
                      .help("Ignore label information and just test")
                      .takes_value(false))
-                    .arg(Arg::with_name("reset_adagrad")
+                    .arg(Arg::with_name("resetadagrad")
                       .short("ra")
                       .long("resetadagrad")
                       .help("Throw away optimizer data when starting new epochs")

@@ -57,6 +57,11 @@ impl <L:OptimizerTrait + 'static> BlockTrait for BlockLR<L>
         
     }
 
+    fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance) {
+        self.weights = vec![WeightAndOptimizerData::<L>{weight:?????, optimizer_data: self.optimizer_lr.initial_data()}; self.weights_len as usize];
+
+    }
+
     #[inline(always)]
     fn forward_backward(&mut self, 
                             further_regressors: &mut [Box<dyn BlockTrait>], 
