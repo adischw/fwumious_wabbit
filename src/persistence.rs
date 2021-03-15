@@ -91,7 +91,6 @@ pub fn new_regressor_from_filename(filename: &str, immutable: bool, resetadagrad
                                   Box<dyn Error>> {
     let mut input_bufreader = io::BufReader::new(fs::File::open(filename).unwrap());
     let (mi, vw, mut re) = load_regressor_without_weights(&mut input_bufreader)?;
-    if resetadagrad && !immutable {}
     if !immutable {
         re.allocate_and_init_weights(&mi);
         re.overwrite_weights_from_buf(&mut input_bufreader)?;
