@@ -58,7 +58,10 @@ impl <L:OptimizerTrait + 'static> BlockTrait for BlockLR<L>
     }
 
     fn reset_optimizer_data(&mut self, mi: &model_instance::ModelInstance) {
-        //pass
+        //self.weights = vec![WeightAndOptimizerData::<L>{weight:self.BlockLR.weight, optimizer_data: self.optimizer_lr.initial_data()}; self.weights_len as usize];
+        for i in 0..self.weights_len {
+            self.weights[i as usize].optimizer_data = self.optimizer_lr.initial_data();
+        }
     }
 
     #[inline(always)]
