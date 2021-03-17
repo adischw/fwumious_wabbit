@@ -74,7 +74,7 @@ impl OptimizerTrait for OptimizerAdagradFlex {
 
     #[inline(always)]
     unsafe fn calculate_update(&self, gradient: f32, data: &mut Self::PerWeightStore) -> f32 {
-        println!("data: {:.20}", *data);
+        //println!("data: {:.20}", *data);
         let accumulated_gradient_squared = *data;
         let gradient_squared = gradient * gradient;
         let new_accumulated_gradient_squared = accumulated_gradient_squared + gradient_squared;
@@ -127,7 +127,7 @@ impl OptimizerTrait for OptimizerAdagradLUT {
             let mut val = learning_rate * ((float_x).powf(minus_power_t) + (float_x_plus_one).powf(minus_power_t)) * 0.5;
             // Safety measure
             if val.is_nan() || val.is_infinite(){
-                println!("x: {} {} {} {}", x, float_x, val, initial_acc_gradient);
+                //println!("x: {} {} {} {}", x, float_x, val, initial_acc_gradient);
                 val = learning_rate;
             }
             
@@ -137,7 +137,7 @@ impl OptimizerTrait for OptimizerAdagradLUT {
     
     #[inline(always)]
     unsafe fn calculate_update(&self, gradient: f32, data: &mut Self::PerWeightStore) -> f32 {
-        println!("data: {:.20}", *data);
+        //println!("data: {:.20}", *data);
         let accumulated_gradient_squared = *data;
         debug_assert!(accumulated_gradient_squared >= 0.0);
         let gradient_squared = gradient * gradient;
