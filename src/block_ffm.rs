@@ -117,7 +117,7 @@ impl <L:OptimizerTrait + 'static> BlockTrait for BlockFFM<L>
         if mi.ffm_k > 0 {       
             if mi.ffm_init_width == 0.0 {
                 // Initialization that has showed to work ok for us, like in ffm.pdf, but centered around zero and further divided by 50
-                self.ffm_one_over_k_root = 1.0 / (self.ffm_k as f32).sqrt() / 50.0;
+                self.ffm_one_over_k_root = 1.0 / (self.ffm_k as f32).sqrt();
                 for i in 0..self.ffm_weights_len {
                     self.weights[i as usize].weight = (1.0 * merand48((self.ffm_weights_len as usize+ i as usize) as u64)-0.5) * self.ffm_one_over_k_root;
                     self.weights[i as usize].optimizer_data = self.optimizer_ffm.initial_data();
