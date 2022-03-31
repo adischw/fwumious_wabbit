@@ -1,4 +1,4 @@
-use clap::{App, Arg,  AppSettings};
+ use clap::{App, Arg,  AppSettings};
 use crate::version;
 
 pub fn parse<'a>() -> clap::ArgMatches<'a> {
@@ -33,8 +33,14 @@ pub fn parse<'a>() -> clap::ArgMatches<'a> {
                      .takes_value(false))
                     .arg(Arg::with_name("interactions")
                      .long("interactions")
-                     .value_name("namespace,namespace")
+                     .value_name("namespace_char,namespace_char[:value]")
                      .help("Adds interactions")
+                     .multiple(true)
+                     .takes_value(true))
+                    .arg(Arg::with_name("linear")
+                     .long("linear")
+                     .value_name("verbose_namespace,verbose_namespace[:value]")
+                     .help("Adds linear feature term with optional value")
                      .multiple(true)
                      .takes_value(true))
                     .arg(Arg::with_name("keep")
@@ -43,6 +49,11 @@ pub fn parse<'a>() -> clap::ArgMatches<'a> {
                      .help("Adds single features")
                      .multiple(true)
                      .takes_value(true))
+                   .arg(Arg::with_name("audit")
+                     .long("audit")
+                     .help("Audit mode - verbosely output data useful for model insights")
+                     .takes_value(false))
+ 
 
                     .arg(Arg::with_name("learning_rate")
                      .short("l")
@@ -136,19 +147,30 @@ pub fn parse<'a>() -> clap::ArgMatches<'a> {
                      .help("vowpal compatibility mode. Uses slow adagrad, emits warnings for non-compatible features")
                      .multiple(false)
                      .takes_value(false))
+                    .arg(Arg::with_name("convert_inference_regressor")
+                        .long("convert_inference_regressor")
+                        .value_name("arg")
+                        .conflicts_with("adaptive")
+                        .help("Inference regressor to save (arg is filename)")
+                        .takes_value(true))
 
-
-                     // FFMs
-                    .arg(Arg::with_name("lrqfa")
-                     .long("lrqfa")
-                     .value_name("namespaces-k")
-                     .help("Field aware Factorization Machines. Namespace letters, minus, k")
-                     .multiple(false)
+                    .arg(Arg::with_name("transform")
+                     .long("transform")
+                     .value_name("target_namespace=func(source_namespaces)(parameters)")
+                     .help("Create new namespace by transforming one or more other namespaces")
+                     .multiple(true)
                      .takes_value(true))
+
                     .arg(Arg::with_name("ffm_field")
                      .long("ffm_field")
-                     .value_name("namespace,namespace,...[:value]")
+                     .value_name("namespace,namespace,...")
                      .help("Define a FFM field by listing namespace letters")
+                     .multiple(true)
+                     .takes_value(true))
+                    .arg(Arg::with_name("ffm_field_verbose")
+                     .long("ffm_field_verbose")
+                     .value_name("namespace_verbose,namespace_verbose,...")
+                     .help("Define a FFM field by listing verbose namespace names")
                      .multiple(true)
                      .takes_value(true))
                     .arg(Arg::with_name("ffm_k")
@@ -227,7 +249,6 @@ pub fn parse<'a>() -> clap::ArgMatches<'a> {
                      .help("After how many examples start printing predictions")
                      .takes_value(true))
                     .arg(Arg::with_name("holdout_after")
-                     .conflicts_with("predictions_after")
                      .conflicts_with("testonly")
                      .required(false)
                      .long("holdout_after")

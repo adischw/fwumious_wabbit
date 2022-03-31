@@ -3,8 +3,6 @@ use std::any::Any;
 use std::mem;
 use std::slice;
 use std::sync::Arc;
-use core::arch::x86_64::*;
-use merand48::*;
 use std::io;
 use std::io::Cursor;
 use std::error::Error;
@@ -18,7 +16,7 @@ use optimizer::OptimizerTrait;
 use crate::block_ffm::BlockFFM;
 use crate::block_lr::BlockLR;
 use crate::block_loss_functions::BlockSigmoid;
-
+use serde_json::Value;
 
 
 pub trait BlockTrait {
@@ -33,6 +31,11 @@ pub trait BlockTrait {
                          further_blocks: &[Box<dyn BlockTrait>], 
                          wsum: f32, 
                          fb: &feature_buffer::FeatureBuffer) -> f32;
+    fn audit_forward(&self, 
+                         wsum_input: f32, 
+                         output: f32,
+                         fb: &feature_buffer::FeatureBuffer);
+
 
     fn allocate_and_init_weights(&mut self, mi: &model_instance::ModelInstance);
     fn get_serialized_len(&self) -> usize;
@@ -66,7 +69,7 @@ pub fn get_regressor_without_weights(mi: &model_instance::ModelInstance) -> Regr
     }    
 }
 
-pub fn get_regressor(mi: &model_instance::ModelInstance) -> Regressor {
+pub fn get_regressor_with_weights(mi: &model_instance::ModelInstance) -> Regressor {
     let mut re = get_regressor_without_weights(mi);
     re.allocate_and_init_weights(mi);
     re
@@ -123,6 +126,7 @@ impl Regressor  {
             // Important to know: learn() functions in blocks aren't guaranteed to be thread-safe
             panic!("This regressor is immutable, you cannot call learn() with update = true");
         }
+        fb.reset_audit_json();
         let update:bool = update && (fb.example_importance != 0.0);
         if !update { // Fast-path for no-update case
             return self.predict(fb);
@@ -137,6 +141,7 @@ impl Regressor  {
     
     pub fn predict(&self, fb: &feature_buffer::FeatureBuffer) -> f32 {
         // TODO: we should find a way of not using unsafe
+        fb.reset_audit_json();
         let blocks_list = &self.blocks_boxes[..];
         let (current, further_blocks) = blocks_list.split_at(1);
         let prediction_probability = current[0].forward(further_blocks, 0.0, fb);
@@ -171,12 +176,16 @@ impl Regressor  {
         Ok(())
     }
 
-    
-    pub fn immutable_regressor_from_buf(&mut self, mi: &model_instance::ModelInstance, input_bufreader: &mut dyn io::Read) -> Result<Regressor, Box<dyn Error>> {
-        // TODO Ideally we would make a copy, not based on model_instance. but this is easier at the moment
-        
+
+    pub fn immutable_regressor_without_weights(&mut self, mi: &model_instance::ModelInstance)  -> Result<Regressor, Box<dyn Error>> {
         let mut rg = Regressor::new_without_weights::<optimizer::OptimizerSGD>(&mi);
         rg.immutable = true;
+        Ok(rg)        
+    }
+
+    
+    pub fn into_immutable_regressor_from_buf(&mut self, rg: &mut Regressor, input_bufreader: &mut dyn io::Read) -> Result<(), Box<dyn Error>> {
+        // TODO Ideally we would make a copy, not based on model_instance. but this is easier at the moment
     
         let len = input_bufreader.read_u64::<LittleEndian>()?;
         let expected_length = self.blocks_boxes.iter().map(|bb| bb.get_serialized_len()).sum::<usize>() as u64;
@@ -187,14 +196,14 @@ impl Regressor  {
             v.read_weights_from_buf_into_forward_only(input_bufreader, &mut rg.blocks_boxes[i])?;
         }
 
-        Ok(rg)
+        Ok(())
     }
 
     // Create immutable regressor from current regressor
     pub fn immutable_regressor(&mut self, mi: &model_instance::ModelInstance) -> Result<Regressor, Box<dyn Error>> {
         // Only to be used by unit tests 
-        let mut rg = Regressor::new_without_weights::<optimizer::OptimizerSGD>(&mi);
-        rg.immutable = true;
+        let mut rg = self.immutable_regressor_without_weights(&mi)?;
+        rg.allocate_and_init_weights(&mi);
 
         let mut tmp_vec: Vec<u8> = Vec::new();
         for (i, v) in &mut self.blocks_boxes.iter().enumerate() {
@@ -217,14 +226,9 @@ mod tests {
 
     /* LR TESTS */
     fn lr_vec(v:Vec<feature_buffer::HashAndValue>) -> feature_buffer::FeatureBuffer {
-        feature_buffer::FeatureBuffer {
-                    label: 0.0,
-                    example_importance: 1.0,
-                    example_number: 0,
-                    lr_buffer: v,
-                    ffm_buffer: Vec::new(),
-                    ffm_fields_count: 0,
-        }
+        let mut fb = feature_buffer::FeatureBuffer::new();
+        fb.lr_buffer = v;
+        fb
     }
 
 
@@ -303,7 +307,7 @@ mod tests {
         mi.optimizer = model_instance::Optimizer::Adagrad;
         mi.init_acc_gradient = 0.0;
         
-        let mut re = get_regressor(&mi);
+        let mut re = get_regressor_with_weights(&mi);
         let mut p: f32;
         
         p = re.learn(&lr_vec(vec![HashAndValue{hash:1, value: 1.0}]), true);
